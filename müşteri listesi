@@ -1,0 +1,133 @@
+import 'package:flutter/material.dart';
+import '../musteri_model.dart';
+import '../musteri_service.dart';
+import 'musteri_guncelle.dart';
+
+class MusteriListele extends StatefulWidget {
+  const MusteriListele({super.key});
+
+  @override
+  State<MusteriListele> createState() => _MusteriListeleState();
+}
+
+class _MusteriListeleState extends State<MusteriListele> {
+  late Future<List<Musteri>> _musteriler;
+
+  @override
+  void initState() {
+    super.initState();
+    _musteriler = musteriListele();
+  }
+
+  void _sil(int id) async {
+    final sonuc = await musteriSil(id);
+    if (sonuc) {
+      setState(() {
+        _musteriler = musteriListele();
+      });
+    }
+  }
+
+  void _yenileListe() {
+    setState(() {
+      _musteriler = musteriListele();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final renkKart = Colors.blue.shade50;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Müşteri Listesi"),
+        centerTitle: true,
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _yenileListe,
+            tooltip: "Yenile",
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Musteri>>(
+        future: _musteriler,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text("Bir hata oluştu"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("Kayıtlı müşteri yok"));
+          } else {
+            final liste = snapshot.data!;
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: liste.length,
+              itemBuilder: (context, index) {
+                final m = liste[index];
+                return Card(
+                  color: renkKart,
+                  elevation: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    title: Text(
+                      "${m.ad} ${m.soyad}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        "🧑 Yaş: ${m.yas}    💼 Çalışma: ${m.calismaDurumu}    💳 Kredi: ${m.krediPuani}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          color: Colors.deepPurple,
+                          tooltip: "Güncelle",
+                          onPressed: () async {
+                            final sonuc = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MusteriGuncelle(musteri: m),
+                              ),
+                            );
+                            if (sonuc == true) _yenileListe();
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          color: Colors.redAccent,
+                          tooltip: "Sil",
+                          onPressed: () => _sil(m.id),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+        },
+      ),
+    );
+  }
+}
