@@ -1,0 +1,122 @@
+import 'package:flutter/material.dart';
+import '../musteri_model.dart';
+import '../musteri_service.dart';
+
+class MusteriGuncelle extends StatefulWidget {
+  final Musteri musteri;
+
+  const MusteriGuncelle({super.key, required this.musteri});
+
+  @override
+  State<MusteriGuncelle> createState() => _MusteriGuncelleState();
+}
+
+class _MusteriGuncelleState extends State<MusteriGuncelle> {
+  late TextEditingController adController;
+  late TextEditingController soyadController;
+  late TextEditingController yasController;
+  late TextEditingController calismaController;
+  late TextEditingController krediController;
+
+  @override
+  void initState() {
+    super.initState();
+    adController = TextEditingController(text: widget.musteri.ad);
+    soyadController = TextEditingController(text: widget.musteri.soyad);
+    yasController = TextEditingController(text: widget.musteri.yas.toString());
+    calismaController = TextEditingController(text: widget.musteri.calismaDurumu);
+    krediController = TextEditingController(text: widget.musteri.krediPuani.toString());
+  }
+
+  void _kaydet() async {
+    final musteri = {
+      'ad': adController.text,
+      'soyad': soyadController.text,
+      'yas': int.tryParse(yasController.text) ?? 0,
+      'calisma_durumu': calismaController.text,
+      'kredi_puani': int.tryParse(krediController.text) ?? 0,
+    };
+
+    final basarili = await musteriGuncelle(widget.musteri.id, musteri);
+    if (basarili && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Müşteri başarıyla güncellendi")),
+      );
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Güncelleme sırasında hata oluştu")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.deepPurple),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Müşteri Güncelle"),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            _buildTextField("Ad", adController, inputBorder),
+            _buildTextField("Soyad", soyadController, inputBorder),
+            _buildTextField("Yaş", yasController, inputBorder, isNumber: true),
+            _buildTextField("Çalışma Durumu", calismaController, inputBorder),
+            _buildTextField("Kredi Puanı", krediController, inputBorder, isNumber: true),
+            const SizedBox(height: 30),
+            ElevatedButton.icon(
+              onPressed: _kaydet,
+              icon: const Icon(Icons.save),
+              label: const Text("Güncelle"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(50),
+                textStyle: const TextStyle(fontSize: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    OutlineInputBorder border, {
+    bool isNumber = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.deepPurple.shade50,
+          labelStyle: const TextStyle(color: Colors.deepPurple),
+          enabledBorder: border,
+          focusedBorder: border.copyWith(
+            borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+}
